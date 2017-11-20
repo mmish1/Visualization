@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<title>Interlocking Directorates Among Major Canadian Firms</title>
+      	<script type="text/javascript" src="d3/d3.min.js"></script>
+		<script src="d3/index.js"></script>
+		<style type="text/css">
+			.axis path,
+            .axis line{
+                fill: none;
+                stroke: #000;
+                shape-rendering: crispEdges;
+            }
+
+            .axis text{
+                font-family: sans-serif;
+                font-size: 11px;
+				fill: black;
+            }
+
+            .arc path {
+                stroke: #fff;
+            }
+		</style>
+	</head>
+	<body>
+        <h1>Interlocking Directorates Among Major Canadian Firms</h1>
+
+			<form action="">
+				<input type="button" value="Sectors vs Assets" onclick="sectorsPlot()"/>
+				<input type="button" value="Nations vs Interlocks" onclick="assetsPlot()"/>
+        	</form>
+
+		<p><b>Assets: </b>(in millions of dollars) </p>
+		<p><b>Sector: </b></p>
+		<dl>
+			<dd><i>AGR </i>- Agriculture, Food, Light Industry</dd>
+			<dd><i>BNK </i>- Banking</dd>
+			<dd><i>CON </i>- Construction</dd>
+			<dd><i>FIN </i>- Other Financial</dd>
+			<dd><i>HLD </i>- Holding Companies</dd>
+			<dd><i>MAN </i>- Heavy Manufacturing</dd>
+			<dd><i>MER </i>- Merchandizing</dd>
+			<dd><i>MIN </i>- Mining, Metals etc.</dd>
+			<dd><i>TRN </i>- Transport</dd>
+			<dd><i>WOD </i>- Wood and Paper</dd>
+		</dl>
+
+		<p><b>Nation: </b>Nation of Control</p>
+		<dl>
+			<dd><i>CAN </i>- Canada</dd>
+			<dd><i>OTH </i>- Other</dd>
+			<dd><i>UK </i>- United Kingdom</dd>
+			<dd><i>US </i>- United States</dd>
+		</dl>
+
+		<p><b>Interlocks: </b>Number of interlocking director and executive positions shared with other major firms</p>
+
+		<label for="barWidth"
+         		style="display: inline-block; width: 250px; text-align: center">
+  		</label>
+		<input type="range" min="1" max="5" id="barWidth">
+
+		<script type="text/javascript">
+
+			function sectorsPlot() {
+                d3.select("svg").remove();
+                var dataset;
+                var assetTotal;
+
+                //Width and height
+                var w = 1200;
+                var h = 700;
+                var barPadding = 30;
+                var padding = 10;
+
+                d3.csv("Ornstein.csv", function (data) {
+                    dataset = data;
+                    assetTotal = d3.nest()
+                        .key(function (d) {
+                            return d.sector;
+                        })
+                        .rollup(function (v) {
+                            return {
+                                total: d3.sum(v, function (d) {
+                                    return d.assets;
+                                })
+                            };
+                        })
+                        .entries(dataset);
+
+                    //Create SVG element
+                    var svg = d3.select("body")
+                        .append("svg")
+                        .attr("width", w)
+                        .attr("height", h)
+                        .attr("fill", "orange");
+
+                    svg.selectAll("rect")
+                        .data(assetTotal)
+                        .enter()
+                        .append("rect")
+                        .attr("x", function (d, i) {
+                            return (i * (w / assetTotal.length) + 50);
+                        })
+                        .attr("y", function (d) {
+                            return h - (d.values.total / 1000 ) - 40;
+                        })
+                        .attr("width", (w / assetTotal.length) - barPadding)
+                        .attr("height", function (d) {
+                            return d.values.total / 1000;
+                        })
+                        .on("mouseover", function (d) {
+                            d3.select(this).style("transform", "scale(1.2,1.2)")
+                                .style("transform-origin", "50% 50%")
+                            var xPos = parseFloat(d3.select(this).attr("x")) + x.rangeBand() / 2 - 10;
+                            var yPos = parseFloat(d3.select(this).attr("y")) + 15;
+                            svg.append("text")
+                                .attr("id", "tooltip")
+                                .attr("x", xPos)
+                                .attr("y", yPos)
+                                .attr("text-anchor", "middle")
+                                .attr("font-family", "sans-serif")
+                                .attr("font-size", "15px")
+                                .attr("fill", "red")
+                                .text(d.values.total);
+                        })
+                        .on("mouseout", function (d) {
+                            d3.select(this).style("transform", "scale(1,1)")
+                            var xPos = parseFloat(d3.select(this).attr("x")) + x.rangeBand() / 2 - 10;
+                            var yPos = parseFloat(d3.select(this).attr("y")) + 15;
+
+                            svg.append("text")
+                                .attr("id", "tooltip")
+                                .attr("x", xPos)
+                                .attr("y", yPos)
+                                .attr("text-anchor", "middle")
+                                .attr("font-family", "sans-serif")
+                                .attr("font-size", "15px")
+                                .attr("fill", "orange")
+                                .text(d.values.total);
+                        })
+						.on("click",function(d){
+                            d3.select("svg").remove();
+                            var color =d3.scale.category20();
+                            var width = 1000,
+                                height = 700,
+                                radius = Math.min(width, height) / 2;
+
+                            var arc = d3.svg.arc()
+                                .outerRadius(radius - 10)
+                                .innerRadius(0);
+
+                            var labelArc = d3.svg.arc()
+                                .outerRadius(radius - 40)
+                                .innerRadius(radius - 40);
+
+                            var pie = d3.layout.pie()
+                                .sort(null)
+                                .value(function(d) { return d.values.total; });
+
+                            var svg = d3.select("body").append("svg")
+                                .attr("width", width)
+                                .attr("height", height)
+                                .append("g")
+                                .attr("transform", "translate(" + width / 2 + "," + height / 2 + ")");
+
+                            var g = svg.selectAll(".arc")
+                                .data(pie(assetTotal))
+                                .enter().append("g")
+                                .attr("class", "arc")
+								.on("mouseover", function (d) {
+                            		d3.select(this).style("transform", "scale(1.05,1.05)")
+                                	.style("transform-origin", "50% 50%")
+
+                            g.append("text")
+                                .attr("transform", function(d) { return "translate(" + labelArc.centroid(d) + ")"; })
+                                .attr("dy", ".35em")
+                                .attr("text-anchor", "middle")
+                                .attr("font-family", "sans-serif")
+                                .attr("font-size","15px")
+                                .text(function(d) { return d.data.values.total; });
+                       		 })
+                        	.on("mouseout", function (d) {
+                            	d3.select(this).style("transform", "scale(1,1)")
+
+                            	g.append("text")
+                                	.attr("transform", function(d) { return "translate(" + labelArc.centroid(d) + ")"; })
+                                	.attr("dy", "0.35em")
+                                	.attr("text-anchor", "middle")
+                                	.attr("font-family", "sans-serif")
+                                	.attr("font-size","15px")
+                                	.style("fill", function(d) { return color(d.data.values.total)})
+                                	.text(function(d) { return d.data.values.total; });
+                            	})
+							.on("click", function (d){sectorsPlot();});
+
+            				g.append("path")
+                                .attr("d", arc)
+                                .style("fill", function(d) { return color(d.data.values.total); });
+                        });
+
+                    var x = d3.scale.ordinal()
+                        .domain(["BNK", "FIN", "TRN", "MIN", "AGR", "HLD", "MAN", "WOD", "MER", "CON"])
+                        .rangeRoundBands([0, w], 0.15);
+
+                    var y = d3.scale.linear()
+                        .domain([0, d3.max(assetTotal, function (d) {
+                            return (h-(d.values.total/1000))*1000-34500;
+                        })])
+                        .range([h, 0]);
+
+                    var xAxis = d3.svg.axis()
+                        .scale(x)
+                        .orient("bottom");
+
+                    var yAxis = d3.svg.axis()
+                        .scale(y)
+                        .orient("left")
+                        .ticks(5);
+
+                    //Create X axis
+                    svg.append("g")
+                        .attr("class", "axis")
+                        .attr("transform", "translate(30," + (h - 35 ) + ")")
+                        .call(xAxis);
+
+                    //Create Y axis
+                    svg.append("g")
+                        .attr("class", "axis")
+                        .attr("transform", "translate(" + 53 + ",0)")
+                        .call(yAxis);
+                })
+            }
+
+            function assetsPlot() {
+                d3.select("svg").remove();
+                var dataset;
+                var interlockTotal;
+
+                //Width and height
+                var w = 1000;
+                var h = 500;
+                var barPadding = 100;
+                var padding = 10;
+                var binRange=4;
+
+                d3.csv("Ornstein.csv", function (data) {
+                    dataset = data;
+                    interlockTotal = d3.nest()
+                        .key(function (d) {
+                            return d.nation;
+                        })
+                        .rollup(function (v) {
+                            return {
+                                total: d3.sum(v, function (d) {
+                                    return d.interlocks;
+                                })
+                            };
+                        })
+                        .entries(dataset);
+
+                    //Create SVG element
+                    var svg = d3.select("body")
+                        .append("svg")
+                        .attr("width", w)
+                        .attr("height", h)
+                        .attr("fill", "goldenrod");
+
+                    svg.selectAll("rect")
+                        .data(interlockTotal)
+                        .enter()
+                        .append("rect")
+                        .attr("x", function (d, i) {
+                            return (i * (w / interlockTotal.length) + 50);
+                        })
+                        .attr("y", function (d) {
+                            return h - (d.values.total / 10 ) - 20;
+                        })
+                        .attr("width", (w / interlockTotal.length) - barPadding)
+                        .attr("height", function (d) {
+                            return d.values.total / 10;
+                        })
+                        .on("mouseover", function (d) {
+                            d3.select(this).style("transform", "scale(1.2,1.2)")
+                                .style("transform-origin", "50% 50%")
+
+                            var xPos = parseFloat(d3.select(this).attr("x")) + x.rangeBand() / 2 - 10;
+                            var yPos = parseFloat(d3.select(this).attr("y")) + 15;
+
+                            svg.append("text")
+                                .attr("id", "tooltip")
+                                .attr("x", xPos)
+                                .attr("y", yPos)
+                                .attr("text-anchor", "middle")
+                                .attr("font-family", "sans-serif")
+                                .attr("font-size", "15px")
+                                .attr("fill", "black")
+                                .text(d.values.total);
+                        })
+                        .on("mouseout", function (d) {
+                            d3.select(this).style("transform", "scale(1,1)")
+                            var xPos = parseFloat(d3.select(this).attr("x")) + x.rangeBand() / 2 - 10;
+                            var yPos = parseFloat(d3.select(this).attr("y")) + 15;
+
+                            svg.append("text")
+                                .attr("id", "tooltip")
+                                .attr("x", xPos)
+                                .attr("y", yPos)
+                                .attr("text-anchor", "middle")
+                                .attr("font-family", "sans-serif")
+                                .attr("font-size", "15px")
+                                .attr("fill", "goldenrod")
+                                .text(d.values.total);
+                        })
+                        .on("click",function(d){
+                            d3.select("svg").remove();
+                            var color =d3.scale.category10();
+                            var width = 600,
+                                height = 600,
+                                radius = Math.min(width, height) / 2;
+
+                            var arc = d3.svg.arc()
+                                .outerRadius(radius - 10)
+                                .innerRadius(0);
+
+                            var labelArc = d3.svg.arc()
+                                .outerRadius(radius - 40)
+                                .innerRadius(radius - 40);
+
+                            var pie = d3.layout.pie()
+                                .sort(null)
+                                .value(function(d) { return d.values.total; });
+
+                            var svg = d3.select("body").append("svg")
+                                .attr("width", width)
+                                .attr("height", height)
+                                .append("g")
+                                .attr("transform", "translate(" + width / 2 + "," + height / 2 + ")");
+
+                            var g = svg.selectAll(".arc")
+                                .data(pie(interlockTotal))
+                                .enter().append("g")
+                                .attr("class", "arc")
+								.on("mouseover", function (d) {
+                            		d3.select(this).style("transform", "scale(1.05,1.05)")
+                                	.style("transform-origin", "50% 50%")
+
+                            g.append("text")
+                                .attr("transform", function(d) { return "translate(" + labelArc.centroid(d) + ")"; })
+                                .attr("dy", ".35em")
+                                .attr("text-anchor", "middle")
+                                .attr("font-family", "sans-serif")
+                                .attr("font-size","15px")
+                                .text(function(d) { return d.data.values.total; });
+                       		 })
+                        	.on("mouseout", function (d) {
+                            	d3.select(this).style("transform", "scale(1,1)")
+
+                            	g.append("text")
+                                	.attr("transform", function(d) { return "translate(" + labelArc.centroid(d) + ")"; })
+                                	.attr("dy", "0.35em")
+                                	.attr("text-anchor", "middle")
+                                	.attr("font-family", "sans-serif")
+                                	.attr("font-size","15px")
+                                	.style("fill", function(d) { return color(d.data.values.total)})
+                                	.text(function(d) { return d.data.values.total; });
+                            	})
+							.on("click", function (d){assetsPlot();});
+
+            				g.append("path")
+                                .attr("d", arc)
+                                .style("fill", function(d) { return color(d.data.values.total); });
+                        })
+
+					d3.select("#barWidth").on("input", function() {
+					    var myFn=slider.value();
+  						update(+myFn);
+					});
+
+					function update(value) {
+  						// update the bar width
+						var barWidthVal=value;
+						if(barWidthVal==1)
+						    barPadding=10;
+						else if(barWidthVal==2)
+						    barPadding=20;
+						else if(barWidthVal==3)
+						    barPadding=30;
+						else if(barWidthVal==4)
+						    barPadding=40;
+						else if(barWidthVal==5)
+						    barPadding=50;
+  						assetsPlot();
+						}
+
+                    var x = d3.scale.ordinal()
+                        .domain(["CAN", "US", "UK", "OTH"])
+                        .rangeRoundBands([0, w], 0.15);
+
+                    var y = d3.scale.linear()
+                        .domain([0, d3.max(interlockTotal, function (d) {
+                            return (h - (d.values.total / 10 ))*10-100;
+                        })])
+                        .range([h, 0]);
+
+                    var xAxis = d3.svg.axis()
+                        .scale(x)
+                        .orient("bottom");
+
+                    var yAxis = d3.svg.axis()
+                        .scale(y)
+                        .orient("left")
+                        .ticks(4);
+
+                    //Create X axis
+                    svg.append("g")
+                        .attr("class", "axis")
+                        .attr("transform", "translate(30," + (h - 18 ) + ")")
+                        .call(xAxis);
+
+                    //Create Y axis
+                    svg.append("g")
+                        .attr("class", "axis")
+                        .attr("transform", "translate(" + 40 + ",0)")
+                        .call(yAxis);
+                })
+            }
+		</script>
+
+
+	</body>
+</html>

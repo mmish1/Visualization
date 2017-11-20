@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<style>
+body {
+    background-color:white;
+}
+
+.axis,
+.frame {
+  shape-rendering: crispEdges;
+}
+
+.axis path,
+.axis line {
+    fill: none;
+    stroke: #F9F4DB;
+    shape-rendering: crispEdges;
+}
+
+
+.axis text {
+    font-family: sans-serif;
+    font-size: 12px;
+}
+
+.loading {
+    font-family: sans-serif;
+    font-size: 15px;
+}
+
+.circle {
+    fill: #222;
+    fill-opacity: .7;
+}
+
+.frame {
+  fill: none;
+  stroke: black;
+}
+
+
+</style>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+
+    <script type="text/javascript" src="http://d3js.org/d3.v3.min.js"></script>
+    <script src="satterplot.js"></script>
+
+    <form action="">
+        <input type="button" value="PCA" onclick="plot2d('pca2.csv')">
+        <input type="button" value="Euclidean (MDS) " onclick="plot2d('euclidean.csv')">
+        <input type="button" value="Scree Plot" onclick="scree_plot('eig.csv')">
+      <input type="button" value="Correlation (MDS)" onclick="plot2d('correlation.csv')">
+        <input type="button" value="Scatter plot matrix" onclick="scattermatrix()">
+    </form>
+    <p>Red - Random Sample; Green - Adaptive Sample</p>
+
+
+    <div id = "scree_plot"></div>
+    <div id  = "scatter_plot"></div>
+    <div id  = "scatter_mat"></div>
+
+
+    <script type="text/javascript">
+    var w = 940;
+    var h = 500;
+    var pad = 50;
+    var left_pad = 150;
+
+
+    var xScale = d3.scale.linear().range([left_pad, w-pad]);
+    var xAxis = d3.svg.axis().scale(xScale).orient("bottom");
+
+    var yScale = d3.scale.linear().range([h-pad*2,pad ]);
+    var yAxis = d3.svg.axis().scale(yScale).orient("left");
+
+
+    var scree = d3.select("#scree_plot")
+                .append("svg")
+                .attr("width", w)
+                .attr("height", 0);
+
+
+    var svg = d3.select("#scatter_plot")
+                .append("svg")
+                .attr("width", w)
+                .attr("height", 0);
+
+    var lsvg = d3.select("#scatter_mat")
+                .append("svg")
+                .attr("width", 0)
+                .attr("height", 0);
+
+    </script>
+</head>
+
+</html>

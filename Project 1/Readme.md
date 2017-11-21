@@ -7,6 +7,3 @@ Aim: To parse the data from a CSV file and implement the following using d3.js:
 6.	On mouse-click, transforming the bar graph into a pie chart and back.
 7.	Increasing/Decreasing bar graph width when mouse moves right/left.
 
-CSV File chosen: The file has data on the 248 largest Canadian firms with publicly available information in the mid-1970s. Information 
-is given about the assets owned by the companies (in millions of USD), the industrial sector it falls into, country of ownership and 
-the number of interlocking director and executive positions shared with other major firms.
